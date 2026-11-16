@@ -1,4 +1,4 @@
-const { RATES, isSupportedCurrency } = require("./rates");
+const { RATES, isSupportedCurrency, getDecimalPlaces } = require("./rates");
 
 class UnSupportedCurrencyError extends Error {
     constructor(){
@@ -23,7 +23,7 @@ async function convertCurrency({from, to, amount}) {
 
     const rate = RATES[to]/RATES[from];
     return{
-        convertedAmount: round(amount * rate, 2),
+        convertedAmount: round(amount * rate, getDecimalPlaces(to)),
         exchangeRate: round(rate, 6)
     };
 }

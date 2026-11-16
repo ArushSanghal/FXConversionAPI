@@ -118,3 +118,15 @@ test("500 when the converter returns an invalid result", async () => {
   assert.strictEqual(res.status, 500);
   assert.deepStrictEqual(await res.json(), { errors: ["Internal server error"] });
 });
+
+test("JPY conversion returns a whole-number amount through the API", async () => {
+  const res = await post(baseDefault, { from: "USD", to: "JPY", amount: 100 });
+  assert.strictEqual(res.status, 200);
+  assert.deepStrictEqual(await res.json(), {
+    from: "USD",
+    to: "JPY",
+    originalAmount: 100,
+    convertedAmount: 15208,
+    exchangeRate: 152.083333,
+  });
+});
