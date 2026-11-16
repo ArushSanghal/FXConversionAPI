@@ -95,9 +95,22 @@ test("400 when Content-Type is not JSON", async () => {
 
 //Converter problems
 
-test("501 while conversion is not implemented", async () => {
-  const res = await post(baseDefault, { from: "CAD", to: "USD", amount: 100 });
-  assert.strictEqual(res.status, 501);
+test("200 with real rates through the full stack", async () => {
+  const res = await post(baseDefault, { from: "cad", to: "usd", amount: 100 });
+  assert.strictEqual(res.status, 200);
+  assert.deepStrictEqual(await res.json(), {
+    from: "CAD",
+    to: "USD",
+    originalAmount: 100,
+    convertedAmount: 72,
+    exchangeRate: 0.72,
+  });
+});
+
+test("400 for an unsupported currency", async () => {
+  const res = await post(baseDefault, { from: "CAD", to: "XYZ", amount: 100 });
+  assert.strictEqual(res.status, 400);
+  assert.deepStrictEqual(await res.json(), { errors: ["Currency Not Supported in System"] });
 });
 
 test("500 when the converter returns an invalid result", async () => {
