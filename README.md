@@ -121,3 +121,30 @@ npm test
 | `400` | Malformed JSON or non-JSON content type | `{ "errors": ["Invalid JSON body"] }` |
 | `400` | Currency not in the supported list | `{ "errors": ["Currency Not Supported in System"] }` |
 | `500` | Unexpected server error | `{ "errors": ["Internal server error"] }` |
+
+
+
+## Design decisions
+
+- **Layered structure.** Request validation (`JSON_Handling/`), conversion logic (`Currency_Conversions/`), and the HTTP layer (`app.js`) are separate, so each can be tested and changed independently.
+- **`app.js` vs `server.js`.** The Express app is created in a function and exported without listening on a port, so API tests can start it on a random free port.
+- **Injected converter.** `createApp({ convert })` accepts a converter function. Tests use fake rates to exercise the API; the real converter reads static rates. Swapping in live rates later requires no route changes.
+- **Cross-rates through the base currency.** Rates are stored per 1 CAD, so any pair is `amount × rate(to) / rate(from)`. Adding a currency means adding one line to `rates.js`.
+- **Rounding once, at the end.** `convertedAmount` is computed from the unrounded rate and then rounded to 2 decimals. The displayed `exchangeRate` is rounded to 6 decimals but isn't used to compute the amount.
+- **Safe currency lookup.** Currency codes are checked with `Object.hasOwn`, so inputs like `"toString"` aren't treated as valid currencies.
+- **Rounded JPY Values** Since JPY is normally a zero decimal currency, I made the decision to round it without a decimal place as is seen to be standard in electronic systems.
+
+## Assumptions
+
+- Unsupported currencies return `400 Bad Request`, since the client asked for something the system doesn't support.
+
+## Testing
+
+`npm test` runs everything with Node's built-in test runner, so there are no test dependencies.
+
+| File | What it covers |
+| --- | --- |
+| `Unit_Tests/validateRequest.test.js` | Field validation, case normalization, missing body |
+| `Unit_Tests/convert.test.js` | Rates, cross-rates, rounding, same-currency, unsupported codes |
+| `Unit_Tests/buildResponse.test.js` | Response shape and handling of invalid converter output |
+| `Unit_Tests/api.test.js` | The real HTTP route end to end: status codes, error bodies, bad JSON |
