@@ -28,8 +28,12 @@ function jsonErrorHandler(err, req, res, next) {
     if (err.type === "entity.parse.failed") {
         return res.status(400).json({ errors: ["Invalid JSON body"] });
     }
+    if (err.code === "UNSUPPORTED_CURRENCY") {
+        return res.status(400).json({ errors: [err.message] });
+    }
+
     console.error(err);
-    res.status(500).json({ errors: ["Internal Server Error"] });
+    res.status(500).json({ errors: ["Internal server error"] });
 }
 
 module.exports = {validateConvertRequest, validateConvertMiddleware, jsonErrorHandler};
